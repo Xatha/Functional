@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Functional.Option;
 
 // Used for cleaner syntax when using creating a new Option with a value.
@@ -247,4 +249,10 @@ public readonly struct Option<T> : IEquatable<Option<T>>
     }
 
     #endregion
+
+    //TODO: probably temporary, might fully implement later or remove
+    public Option<TReturn> MapBind<TReturn, TArg2>(Func<T, TArg2, TReturn> func, TArg2 arg2)
+    {
+        return _isSome ? new Option<TReturn>(func(_value!, arg2)) : new Option<TReturn>();
+    }
 }

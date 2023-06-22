@@ -75,4 +75,22 @@ public class OptionTests
         // Assert
         Assert.That(result, Is.EqualTo(-1));
     }
+
+    [Test]
+    public void BindMap_WithOption_WhenValueIsNull_ReturnsCorrectValue()
+    {
+        // Arrange
+        Option<string> option;
+        int length;
+        int result;
+        
+        // Act
+        option = Option.Some("Hello World!");
+        length = 5;
+        
+        result = option.MapBind((x, y) => x.Length + y, length).Collapse(-1);
+        
+        // Assert
+        Assert.That(result, Is.EqualTo("Hello World!".Length + 5));
+    }
 }
