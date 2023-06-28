@@ -2,15 +2,31 @@ using System.Collections;
 
 namespace Functional.View;
 
+/// <summary>
+/// Provides an immutable view into an array. This view can be sliced to provide a view into a subset of the array.
+/// While this view is immutable, the underlying array is not. This means that changes to the underlying array will be reflected,
+/// but the view itself cannot be changed. Does also not guarantee immutability of the items in the array.
+/// </summary> 
+/// <typeparam name="T">Type of the view.</typeparam>
 public readonly struct ArrayView<T> : IReadOnlyList<T>
 {
     private readonly T[] _items;
     private readonly int _indexOffset;
     private readonly int _rangeLength;
     private readonly int _end;
-
+    
+    /// <summary>
+    /// Gets the number of elements that can be accessed from this view.
+    /// </summary>
     public int Count { get; }
-
+    
+    /// <summary>
+    /// Gets a given element from the view. Notice that if you are using a slice of the view,
+    /// the index will be relative to the slice, and you should not manually calculate offsets. 
+    /// </summary>
+    /// <param name="index">Index</param>
+    /// <exception cref="IndexOutOfRangeException">Thrown if the index is out of bounds.</exception>
+    /// <remarks> Elements are references, and any mutations to them will mutate them in the backing array too. </remarks>
     public T this[int index]
     {
         get
@@ -19,7 +35,7 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
             return _items[index + _indexOffset];
         }
     }
-
+    
     public ArrayView<T> this[Range range] => Slice(range);
 
     public ArrayView(T[] array)
@@ -50,22 +66,15 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
     }
 
     #region Enumerator
-
-    //public Span<T>.Enumerator GetEnumerator()
-
-    //public Span<T>.Enumerator GetEnumerator()
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    
     public ArrayView<T>.Enumerator GetEnumerator()
     {
         return new ArrayView<T>.Enumerator(this);
-        //return new ArrayViewEnumerator<T>(this);
     }
     
-    IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        => GetEnumerator();
+    IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
 
-    IEnumerator IEnumerable.GetEnumerator()
-        => GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     #endregion
     
@@ -77,7 +86,7 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
         private int _index;
 
         public T Current => _items[_index];
-        object IEnumerator.Current => Current;
+        object IEnumerator.Current => Current!;
 
         internal Enumerator(ArrayView<T> arrayView)
         {
