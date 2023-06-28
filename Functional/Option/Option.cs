@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace Functional.Option;
 
 // Used for cleaner syntax when using creating a new Option with a value.
@@ -9,6 +7,11 @@ public static class Option
     {
         return new(value);
     }
+    
+    public static Option<T> None<T>()
+    {
+        return new();
+    }
 }
 
 public readonly struct Option<T> : IEquatable<Option<T>>
@@ -16,24 +19,31 @@ public readonly struct Option<T> : IEquatable<Option<T>>
     private readonly bool _isSome;
     private readonly T? _value;
 
+    /// <summary>
+    /// Creates a new Option with no value. Not recommended to use directly, use <see cref="Option{T}.None()"/> instead.
+    /// </summary>
     public Option()
     {
         _value = default;
         _isSome = false;
     }
 
-    internal Option(T value)
+    /// <summary>
+    /// Creates a new <see cref="Option{T}"/> with a value. Not recommended to use directly, use <see cref="Option.Some{T}(T)"/> instead.
+    /// </summary>
+    /// <param name="value">Value to wrap.</param>
+    public Option(T value)
     {
         _value = value;
         _isSome = true;
     }
 
-    public static Option<T> Some(T value)
+    internal static Option<T> Some(T value)
     {
         return new(value);
     }
 
-    public static Option<T> None()
+    internal static Option<T> None()
     {
         return new();
     }

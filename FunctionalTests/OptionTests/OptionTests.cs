@@ -30,7 +30,7 @@ public class OptionTests
         int result;
 
         // Act
-        option = Option<string>.None();
+        option = Option.None<string>();
         result = option.Map(x => x.Length).Collapse(-1);
         
         
@@ -68,7 +68,7 @@ public class OptionTests
         Option<int> Add(int x, Option<int> y) => y.Map(z => x + z);
         
         // Act
-        option = Option<string>.None();
+        option = Option.None<string>();
         length = Option.Some(5);
         result = option.Map(x => Add(x.Length, length)).Collapse(-1);
         

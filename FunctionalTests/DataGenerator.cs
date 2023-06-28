@@ -1,10 +1,10 @@
-namespace FunctionalBenchmarks;
+namespace FunctionalTests;
 
 public static class DataGenerator
 { 
     private const int SEED = 42;
     
-    public static int[] GenerateIntDataSet(int size)
+    public static int[] GenerateDeterministicIntDataSet(int size)
     {
         Random random = new(SEED);
         int[] dataSet = new int[size];

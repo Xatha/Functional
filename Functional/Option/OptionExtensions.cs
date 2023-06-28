@@ -4,7 +4,7 @@ public static class OptionExtensions
 {
     #region ToOption
 
-    public static Option<T> ToOption<T>(this T? value) where T : class
+    public static Option<T> ToOption<T>(this T? value)
     {
         return value is null ? Option<T>.None() : Option<T>.Some(value);
     }
