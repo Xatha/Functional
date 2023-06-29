@@ -11,15 +11,14 @@ namespace Functional.View;
 public readonly struct ArrayView<T> : IReadOnlyList<T>
 {
     private readonly T[] _items;
-    private readonly int _indexOffset;
-    private readonly int _rangeLength;
-    private readonly int _end;
+    private readonly int _offset;
+    private readonly int _length;
     
     /// <summary>
     /// Gets the number of elements that can be accessed from this view.
     /// </summary>
-    public int Count { get; }
-    
+    public int Count => _length;
+
     /// <summary>
     /// Gets a given element from the view. Notice that if you are using a slice of the view,
     /// the index will be relative to the slice, and you should not manually calculate offsets. 
@@ -31,8 +30,8 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
     {
         get
         {
-            if ((uint) index >= (uint) _end) throw new IndexOutOfRangeException();
-            return _items[index + _indexOffset];
+            if ((uint) index >= (uint) _length) throw new IndexOutOfRangeException();
+            return _items[index + _offset];
         }
     }
     
@@ -41,18 +40,14 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
     public ArrayView(T[] array)
     {
         _items = array;
-        _indexOffset = 0;
-        _rangeLength = array.Length;
-        _end = array.Length;
-        Count = array.Length;
+        _offset = 0;
+        _length = array.Length; 
     }
 
     public ArrayView(T[] array, Range range)
     {
         _items = array;
-        (_indexOffset, _rangeLength) = range.GetOffsetAndLength(_items.Length);
-        _end = _rangeLength;
-        Count = _rangeLength + _indexOffset;
+        (_offset, _length) = range.GetOffsetAndLength(_items.Length);
     }
 
     public ArrayView<T> Slice(Range range)
@@ -62,7 +57,7 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
 
     public ReadOnlySpan<T> AsReadOnlySpan()
     {
-        return _items.AsSpan(_indexOffset, _rangeLength);
+        return _items.AsSpan(_offset, _length);
     }
 
     #region Enumerator
@@ -93,9 +88,9 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
             // Benchmarks have shown that copying the values here is faster than using the reference directly.
             // This results in a 5x speedup. I am unsure why.
             _items = arrayView._items;
-            _index = arrayView._indexOffset - 1;
-            _start = arrayView._indexOffset;
-            _end   = arrayView.Count;
+            _index = arrayView._offset - 1;
+            _start = arrayView._offset;
+            _end   = arrayView._length + _start;
         }
 
         public bool MoveNext()

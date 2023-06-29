@@ -44,14 +44,14 @@ public class ArrayViewTests
         // Arrange
         int[] backingArray = {4, 3, 1, 5, 64, 2, -4};
         ArrayView<int> arrayView = new(backingArray);
-        ArrayView<int> slicedView = arrayView.Slice(2..4);
+        ArrayView<int> slicedView = arrayView.Slice(3..5);
         
         int slicedViewCount = slicedView.Count;
         int viewCount       = arrayView.Count;
         
         // Assert 
         Assert.That(viewCount, Is.EqualTo(backingArray.Length));
-        Assert.That(slicedViewCount, Is.EqualTo(4));
+        Assert.That(slicedViewCount, Is.EqualTo(2));
     }
 
     [Test]

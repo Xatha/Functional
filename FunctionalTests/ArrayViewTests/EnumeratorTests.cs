@@ -15,11 +15,11 @@ public class EnumeratorTests
     {
         _backingArray = DataGenerator.GenerateDeterministicIntDataSet(1000);
         _fullArrayView = new ArrayView<int>(_backingArray);
-        _partialArrayView = _fullArrayView.Slice(2..4);
+        _partialArrayView = _fullArrayView.Slice(5..7);
     }
     
     [Test]
-    public void ArrayView_Enumerator_LoopsCorrectlyThroughView()
+    public void ArrayView_Enumerator_LoopsFullView()
     {
         // Arrange
         int index = 0;
@@ -30,21 +30,24 @@ public class EnumeratorTests
             Assert.That(element, Is.EqualTo(_backingArray[index]));
             index++;
         }
+        
+        Assert.That(index, Is.EqualTo(_backingArray.Length));
     }
     
     [Test]
-    public void ArrayView_Enumerator_LoopsCorrectlyThroughPartialView()
-    {
+    public void ArrayView_Enumerator_LoopsPartialView(){
         // Arrange
-        int index = 2;
+        int index = 5;
         
         // Act & Assert
         foreach (int element in _partialArrayView)
         {
             Assert.That(element, Is.EqualTo(_backingArray[index]));
-            Assert.That(index, Is.LessThanOrEqualTo(3));
+            Assert.That(index, Is.LessThanOrEqualTo(6));
             index++;
         }
+        
+        Assert.That(index, Is.EqualTo(7));
     }
     
     [Test]
@@ -66,13 +69,16 @@ public class EnumeratorTests
     {
         // Arrange
         ArrayView<int> singleElementView = _fullArrayView.Slice(0..1);
+        bool hasLooped = false;
         
         // Act & Assert
         Assert.That(singleElementView.Count, Is.EqualTo(1));
         foreach (int element in singleElementView)
         {
             Assert.That(element, Is.EqualTo(_backingArray[0]));
+            hasLooped = true;
         }
+        Assert.That(hasLooped, Is.True);
     }
 
     [Test]
