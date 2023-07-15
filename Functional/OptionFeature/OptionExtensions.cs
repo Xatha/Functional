@@ -1,4 +1,4 @@
-namespace Functional.Option;
+namespace Functional.OptionFeature;
 
 public static class OptionExtensions
 {

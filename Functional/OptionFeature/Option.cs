@@ -1,4 +1,4 @@
-namespace Functional.Option;
+namespace Functional.OptionFeature;
 
 // Used for cleaner syntax when using creating a new Option with a value.
 public static class Option
@@ -19,6 +19,12 @@ public readonly struct Option<T> : IEquatable<Option<T>>
     private readonly bool _isSome;
     private readonly T? _value;
 
+    public void Deconstruct(out bool isSome, out T value)
+    {
+        isSome = _isSome;
+        value =  _value!;
+    }
+    
     /// <summary>
     /// Creates a new Option with no value. Not recommended to use directly, use <see cref="Option{T}.None()"/> instead.
     /// </summary>
@@ -27,7 +33,19 @@ public readonly struct Option<T> : IEquatable<Option<T>>
         _value = default;
         _isSome = false;
     }
-
+    
+    /// <summary>
+    /// Combines two <see cref="Option{T}"/>s into a single <see cref="Option{T}"/> with a tuple of the values
+    /// that is only Some if both <see cref="Option{T}"/>s are Some.
+    /// </summary>
+    /// <param name="second">The <see cref="Option{T}"/> to combine with.</param>
+    /// <typeparam name="TSecond">The type of the second.</typeparam>
+    /// <returns>An <see cref="Option{T}"/> of type (T, TSecond) that is Some if and only if both this and second are Some.</returns>
+    public Option<(T, TSecond)> Concat<TSecond>(Option<TSecond> second)
+    {
+        return Transform(second, (f, s) => (f, s));
+    }
+    
     /// <summary>
     /// Creates a new <see cref="Option{T}"/> with a value. Not recommended to use directly, use <see cref="Option.Some{T}(T)"/> instead.
     /// </summary>
@@ -37,7 +55,7 @@ public readonly struct Option<T> : IEquatable<Option<T>>
         _value = value;
         _isSome = true;
     }
-
+    
     internal static Option<T> Some(T value)
     {
         return new(value);
@@ -61,6 +79,11 @@ public readonly struct Option<T> : IEquatable<Option<T>>
     #endregion
     
     #region Map
+    
+    public OptionTaskWrapper<TResult> Map<TResult>(Func<T, Task<TResult>> func)
+    {
+        return _isSome ? OptionTaskWrapper.Some(func(_value!)) : OptionTaskWrapper.None<TResult>();
+    }
 
     public Option<TResult> Map<TResult>(Func<T, TResult> func)
     {
@@ -266,3 +289,92 @@ public readonly struct Option<T> : IEquatable<Option<T>>
         return _isSome ? new Option<TReturn>(func(_value!, arg2)) : new Option<TReturn>();
     }
 }
+
+public readonly struct Union<T, U>
+{
+    internal readonly T _t;
+    internal readonly U _u;
+    
+    private readonly Type _type;
+    
+    public Union(T value)
+    {
+        _t = value;
+        _type = typeof(T);
+    }
+    
+    public Union(U value)
+    {
+        _u = value;
+        _type = typeof(U);
+    }
+    
+    public bool Is<TType>()
+    {
+        return _type == typeof(TType);
+    }
+}
+
+/*
+public readonly struct Optional<T>
+{
+    private readonly Union<Some<T>, None> _value;
+    
+    private Optional(Union<Some<T>, None> value)
+    {
+        _value = value;
+    }
+    
+    public Optional() : this(new Union<Some<T>, None>(new None())) { }
+    public (bool, T) IsSome { get; }
+
+    public static Optional<T> Some(T value)
+    {
+        return new Optional<T>(new Union<Some<T>, None>(new Some<T>(value)));
+    }
+    
+    public static Optional<T> None()
+    {
+        return new Optional<T>(new Union<Some<T>, None>(new None()));
+    }
+    
+    public Optional<TResult> Map<TResult>(Func<T, TResult> func)
+    {
+        return _value.Is<Some<T>>() 
+            ? new Optional<TResult>(new Union<Some<TResult>, None>(new Some<TResult>(func(_value._t.Value)))) 
+            : new Optional<TResult>();
+    }
+    
+    public static explicit operator Some<T>(Optional<T> value)
+    {
+        return value._value.Is<Some<T>>() ? value._value._t : throw new InvalidCastException();
+    }
+    
+    public static explicit operator None(Optional<T> value)
+    {
+        return value._value.Is<None>() ? value._value._u : throw new InvalidCastException();
+    }
+    
+    public void Deconstruct(out bool isSome, out T value)
+    {
+        isSome = _value.Is<Some<T>>();
+        value = _value.Is<Some<T>>() ? _value._t.Value : default!;
+    }
+
+}
+
+public readonly struct None
+{
+    public static readonly None Value = new None();
+}
+
+public readonly struct Some<T>
+{
+    public readonly T Value;
+
+    public Some(T value)
+    {
+        Value = value;
+    }
+}
+*/

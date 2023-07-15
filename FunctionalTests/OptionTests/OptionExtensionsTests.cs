@@ -1,4 +1,4 @@
-using Functional.Option;
+using Functional.OptionFeature;
 
 namespace FunctionalTests.OptionTests;
 
