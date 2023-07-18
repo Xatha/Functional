@@ -6,4 +6,12 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Folder Include="SumTypes\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Functional.csproj.DotSettings" />
+    </ItemGroup>
+
 </Project>

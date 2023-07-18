@@ -1,4 +1,4 @@
-namespace Functional.OptionFeature;
+namespace Functional.SumTypes;
 
 // Used for cleaner syntax when using creating a new Option with a value.
 public static class Option
@@ -24,7 +24,7 @@ public readonly struct Option<T> : IEquatable<Option<T>>
         isSome = _isSome;
         value =  _value!;
     }
-    
+
     /// <summary>
     /// Creates a new Option with no value. Not recommended to use directly, use <see cref="Option{T}.None()"/> instead.
     /// </summary>
@@ -287,5 +287,10 @@ public readonly struct Option<T> : IEquatable<Option<T>>
     public Option<TReturn> MapBind<TReturn, TArg2>(Func<T, TArg2, TReturn> func, TArg2 arg2)
     {
         return _isSome ? new Option<TReturn>(func(_value!, arg2)) : new Option<TReturn>();
+    }
+
+    public TResult CollapseBind<TArg, TResult>(Func<TArg, TResult> func, TArg arg)
+    {
+        return func(arg);
     }
 } 

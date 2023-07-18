@@ -1,4 +1,4 @@
-using Functional.OptionFeature;
+using Functional.SumTypes;
 
 namespace FunctionalTests.OptionTests;
 

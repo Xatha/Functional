@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Functional.View;
+namespace Functional.Datastructures;
 
 /// <summary>
 /// Provides an immutable view into an array. This view can be sliced to provide a view into a subset of the array.
@@ -8,7 +8,7 @@ namespace Functional.View;
 /// but the view itself cannot be changed. Does also not guarantee immutability of the items in the array.
 /// </summary> 
 /// <typeparam name="T">Type of the view.</typeparam>
-public readonly struct ArrayView<T> : IReadOnlyList<T>
+public readonly struct ImmutableArrayView<T> : IReadOnlyList<T>
 {
     private readonly T[] _items;
     private readonly int _offset;
@@ -35,24 +35,24 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
         }
     }
     
-    public ArrayView<T> this[Range range] => Slice(range);
+    public ImmutableArrayView<T> this[Range range] => Slice(range);
 
-    public ArrayView(T[] array)
+    public ImmutableArrayView(T[] array)
     {
         _items = array;
         _offset = 0;
         _length = array.Length; 
     }
 
-    public ArrayView(T[] array, Range range)
+    public ImmutableArrayView(T[] array, Range range)
     {
         _items = array;
         (_offset, _length) = range.GetOffsetAndLength(_items.Length);
     }
 
-    public ArrayView<T> Slice(Range range)
+    public ImmutableArrayView<T> Slice(Range range)
     {
-        return new ArrayView<T>(_items, range);
+        return new ImmutableArrayView<T>(_items, range);
     }
 
     public ReadOnlySpan<T> AsReadOnlySpan()
@@ -62,9 +62,9 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
 
     #region Enumerator
     
-    public ArrayView<T>.Enumerator GetEnumerator()
+    public ImmutableArrayView<T>.Enumerator GetEnumerator()
     {
-        return new ArrayView<T>.Enumerator(this);
+        return new ImmutableArrayView<T>.Enumerator(this);
     }
     
     IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
@@ -83,7 +83,7 @@ public readonly struct ArrayView<T> : IReadOnlyList<T>
         public T Current => _items[_index];
         object IEnumerator.Current => Current!;
 
-        internal Enumerator(ArrayView<T> arrayView)
+        internal Enumerator(ImmutableArrayView<T> arrayView)
         {
             // Benchmarks have shown that copying the values here is faster than using the reference directly.
             // This results in a 5x speedup. I am unsure why.

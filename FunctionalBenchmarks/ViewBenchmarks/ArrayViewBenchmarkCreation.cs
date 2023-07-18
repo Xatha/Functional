@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
-using Functional.View;
+using Functional.Datastructures;
 
 namespace FunctionalBenchmarks.ViewBenchmarks;
 
@@ -9,7 +9,7 @@ namespace FunctionalBenchmarks.ViewBenchmarks;
 public class ArrayViewBenchmarkCreation
 {
     private int[] _dataSet = null!;
-    private ArrayView<int> _arrayView;
+    private ImmutableArrayView<int> _arrayView;
     private Range _range;
     private int _offset;
     private int _length;
@@ -21,7 +21,7 @@ public class ArrayViewBenchmarkCreation
     public void Setup()
     {
         _dataSet = DataGenerator.GenerateIntDataSet(Size);
-        _arrayView = new ArrayView<int>(_dataSet);
+        _arrayView = new ImmutableArrayView<int>(_dataSet);
         _range = (Size / 5)..(Size / 2);
         (_offset, _length) = _range.GetOffsetAndLength(Size);
     }
@@ -39,19 +39,19 @@ public class ArrayViewBenchmarkCreation
     }
     
     [Benchmark]
-    public ArrayView<int> ArrayView_FullSegment()
+    public ImmutableArrayView<int> ArrayView_FullSegment()
     {
-        return new ArrayView<int>(_dataSet);
+        return new ImmutableArrayView<int>(_dataSet);
     }
     
     [Benchmark]
-    public ArrayView<int> ArrayView_PartialSegment()
+    public ImmutableArrayView<int> ArrayView_PartialSegment()
     {
-        return new ArrayView<int>(_dataSet, _range);
+        return new ImmutableArrayView<int>(_dataSet, _range);
     }
     
     [Benchmark]
-    public ArrayView<int> ArrayView_Slice()
+    public ImmutableArrayView<int> ArrayView_Slice()
     {
         return _arrayView.Slice(_range);
     }

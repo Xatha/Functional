@@ -1,4 +1,4 @@
-namespace Functional.OptionFeature;
+namespace Functional.SumTypes;
 
 public static class OptionTaskWrapper
 {
@@ -37,8 +37,8 @@ public readonly struct OptionTaskWrapper<T>
 
         var nextTask = _task.ContinueWith(async t => await t switch
         {
-            (true, var value) => Option.Some(await func(Task.FromResult(value))),
-            _ => Option.None<TResult>()
+            (true, var value) => SumTypes.Option.Some(await func(Task.FromResult(value))),
+            _ => SumTypes.Option.None<TResult>()
         }).Unwrap();
 
         return new OptionTaskWrapper<TResult>(nextTask);

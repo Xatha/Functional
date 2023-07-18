@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using Functional.View;
+using Functional.Datastructures;
 
 namespace FunctionalTests.ArrayViewTests;
 
@@ -12,7 +12,7 @@ public class ArrayViewTests
     {
         // Arrange
         int[] backingArray = {4, 3, 1, 5, 64, 2, -4};
-        ArrayView<int> arrayView = new(backingArray);
+        ImmutableArrayView<int> arrayView = new(backingArray);
         
         // Act & Assert
         for (int i = 0; i < backingArray.Length; i++)
@@ -26,7 +26,7 @@ public class ArrayViewTests
     {
         // Arrange
         int[] backingArray = {4, 3, 1, 5, 64, 2, -4};
-        ArrayView<int> arrayView = new(backingArray);
+        ImmutableArrayView<int> arrayView = new(backingArray);
 
         var slicedView = arrayView.Slice(2..4);
 
@@ -43,8 +43,8 @@ public class ArrayViewTests
     {
         // Arrange
         int[] backingArray = {4, 3, 1, 5, 64, 2, -4};
-        ArrayView<int> arrayView = new(backingArray);
-        ArrayView<int> slicedView = arrayView.Slice(3..5);
+        ImmutableArrayView<int> arrayView = new(backingArray);
+        ImmutableArrayView<int> slicedView = arrayView.Slice(3..5);
         
         int slicedViewCount = slicedView.Count;
         int viewCount       = arrayView.Count;
@@ -59,7 +59,7 @@ public class ArrayViewTests
     {
         // Arrange
         int[] backingArray = {4, 3, 1, 5, 64, 2, -4};
-        ArrayView<int> arrayView = new(backingArray);
+        ImmutableArrayView<int> arrayView = new(backingArray);
         int backingArrayIndex = 0;
         
         // Act & Assert
@@ -74,8 +74,8 @@ public class ArrayViewTests
     {
         // Arrange
         int[] backingArray = {4, 3, 1, 5, 64, 2, -4};
-        ArrayView<int> arrayView = new(backingArray);
-        ArrayView<int> slicedView = arrayView.Slice(2..4);
+        ImmutableArrayView<int> arrayView = new(backingArray);
+        ImmutableArrayView<int> slicedView = arrayView.Slice(2..4);
         
         int backingArrayIndex = 2;
         

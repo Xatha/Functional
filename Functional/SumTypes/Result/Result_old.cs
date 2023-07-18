@@ -1,5 +1,6 @@
-﻿namespace Functional.Result;
+﻿namespace Functional.SumTypes;
 
+/*
 public readonly struct Result
 {
     private readonly ResultError _error;
@@ -195,3 +196,4 @@ public readonly struct Result<TResult>
     internal static Result<TResult> Err() => new(ResultError.Empty);
 }
 
+*/

@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
-using Functional.View;
+using Functional.Datastructures;
 
 namespace FunctionalBenchmarks.ViewBenchmarks;
 
@@ -9,7 +9,7 @@ namespace FunctionalBenchmarks.ViewBenchmarks;
 public class ArrayViewBenchmarkForLoop
 {
     private int[] _dataSet = null!;
-    private ArrayView<int> _arrayView;
+    private ImmutableArrayView<int> _arrayView;
     private ArraySegment<int> _dataSetSegment;
 
     [Params(10_000)]
@@ -19,7 +19,7 @@ public class ArrayViewBenchmarkForLoop
     public void Setup()
     {
         _dataSet = DataGenerator.GenerateIntDataSet(Size);
-        _arrayView = new ArrayView<int>(_dataSet);
+        _arrayView = new ImmutableArrayView<int>(_dataSet);
         _dataSetSegment = new ArraySegment<int>(_dataSet);
     }
 

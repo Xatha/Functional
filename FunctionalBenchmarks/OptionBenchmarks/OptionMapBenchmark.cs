@@ -1,5 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using Functional.OptionFeature;
+using Functional.SumTypes;
 
 // Setup is always called once before running any benchmarks, so our private field _dataSet is initialized here.
 #pragma warning disable CS8618 

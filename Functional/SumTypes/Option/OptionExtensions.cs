@@ -1,4 +1,4 @@
-namespace Functional.OptionFeature;
+namespace Functional.SumTypes;
 
 public static class OptionExtensions
 {

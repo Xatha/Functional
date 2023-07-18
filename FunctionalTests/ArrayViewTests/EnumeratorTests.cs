@@ -1,4 +1,4 @@
-using Functional.View;
+using Functional.Datastructures;
 using Microsoft.VisualBasic;
 
 namespace FunctionalTests.ArrayViewTests;
@@ -7,14 +7,14 @@ namespace FunctionalTests.ArrayViewTests;
 public class EnumeratorTests
 {
     private int[] _backingArray;
-    private ArrayView<int> _fullArrayView;
-    private ArrayView<int> _partialArrayView;
+    private ImmutableArrayView<int> _fullArrayView;
+    private ImmutableArrayView<int> _partialArrayView;
 
     [SetUp]
     public void Setup()
     {
         _backingArray = DataGenerator.GenerateDeterministicIntDataSet(1000);
-        _fullArrayView = new ArrayView<int>(_backingArray);
+        _fullArrayView = new ImmutableArrayView<int>(_backingArray);
         _partialArrayView = _fullArrayView.Slice(5..7);
     }
     
@@ -54,7 +54,7 @@ public class EnumeratorTests
     public void ArrayView_Enumerator_LoopsCorrectlyThroughEmptySlice()
     {
         // Arrange
-        ArrayView<int> emptyView = _fullArrayView.Slice(0..0);
+        ImmutableArrayView<int> emptyView = _fullArrayView.Slice(0..0);
         
         // Act & Assert
         Assert.That(emptyView.Count, Is.EqualTo(0));
@@ -68,7 +68,7 @@ public class EnumeratorTests
     public void ArrayView_Enumerator_LoopsCorrectlyThroughSingleElementSlice()
     {
         // Arrange
-        ArrayView<int> singleElementView = _fullArrayView.Slice(0..1);
+        ImmutableArrayView<int> singleElementView = _fullArrayView.Slice(0..1);
         bool hasLooped = false;
         
         // Act & Assert
@@ -85,7 +85,7 @@ public class EnumeratorTests
     public void ArrayView_Enumerator_Reset_ResetsEnumerator()
     {
         // Arrange
-        ArrayView<int>.Enumerator enumerator = _fullArrayView.GetEnumerator();
+        ImmutableArrayView<int>.Enumerator enumerator = _fullArrayView.GetEnumerator();
         
         int[] firstIteration = new int[_backingArray.Length];
         int[] secondIteration = new int[_backingArray.Length];
