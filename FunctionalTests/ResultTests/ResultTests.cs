@@ -3,6 +3,19 @@ using Functional.SumTypes;
 
 namespace FunctionalTests.ResultTests;
 
+/* Test names follow the convention of:
+ * MethodName_StateUnderTest_ExpectedBehavior
+ * -------------------------------------------
+ * Tests are grouped into regions based on the method/properties they are testing.
+ * Test classes that test generic types must be generic themselves where T is restricted to new(). 
+ *
+ * Generic test classes must be run with the following attribute:
+ * [TestFixture(typeof(Unit))]
+ * [TestFixture(typeof(TestReferenceType))]
+ * [TestFixture(typeof(TestValueType))]
+ * To ensure that the tests are run for all types.
+ */
+
 [TestFixture(typeof(Unit))]
 [TestFixture(typeof(TestReferenceType))]
 [TestFixture(typeof(TestValueType))]
@@ -12,19 +25,21 @@ public class ResultTests<T> where T : new()
     public void Setup()
     {
         _rawValue = new T();
-        _successResult = Result.Ok(_rawValue);
-        _failureResult = Result.Err<T>(Error.Empty);
+        _okResult = Result.Ok(_rawValue);
+        _errResult = Result.Err<T>(Error.Empty);
     }
 
     private T _rawValue = default!;
-    private Result<T> _successResult;
-    private Result<T> _failureResult;
+    private Result<T> _okResult;
+    private Result<T> _errResult;
+
+    #region IsOk & IsErr properties
 
     [Test]
-    public void Result_OkIsOk()
+    public void IsOk_ResultOk_ReturnsTrue()
     {
         // Arrange
-        var successResult = _successResult;
+        var successResult = _okResult;
 
         // Assert
         Assert.That(successResult.IsOk, Is.EqualTo(true));
@@ -32,18 +47,22 @@ public class ResultTests<T> where T : new()
     }
 
     [Test]
-    public void Result_ErrIsErr()
+    public void IsErr_ResultErr_ReturnsTrue()
     {
         // Arrange
-        var failureResult = _failureResult;
+        var failureResult = _errResult;
 
         // Assert
         Assert.That(failureResult.IsOk, Is.EqualTo(false));
         Assert.That(failureResult.IsErr, Is.EqualTo(true));
     }
 
+    #endregion
+
+    #region Implicit conversion
+    
     [Test]
-    public void Result_ImplicitConversionFromOkToResult_IsOkResult()
+    public void ImplicitConversion_FromOkToResult_IsOkResult()
     {
         Result<T> successResult = _rawValue;
 
@@ -52,7 +71,7 @@ public class ResultTests<T> where T : new()
     }
 
     [Test]
-    public void Result_ImplicitConversionFromNullToResult_IsErrResult()
+    public void ImplicitConversion_FromNullToResult_IsErrResult()
     {
         if (typeof(T).IsValueType) Assert.Pass();
 
@@ -65,19 +84,23 @@ public class ResultTests<T> where T : new()
     }
 
     [Test]
-    public void Result_ImplicitConversionFromErrToResult_IsErrResult()
+    public void ImplicitConversion_FromErrToResult_IsErrResult()
     {
-        var failureResult = _failureResult;
+        var failureResult = _errResult;
 
         Assert.That(failureResult.IsOk, Is.EqualTo(false));
         Assert.That(failureResult.IsErr, Is.EqualTo(true));
     }
 
+    #endregion
+
+    #region Match Method
+    
     [Test]
-    public void Result_Match_ExecutesOkFuncWhenResultOk()
+    public void Match_ResultOk_ExecutesOkFunc()
     {
         // Arrange
-        var successResult = _successResult;
+        var successResult = _okResult;
         var okFuncExecuted = false;
         var errFuncExecuted = false;
 
@@ -102,10 +125,10 @@ public class ResultTests<T> where T : new()
     }
 
     [Test]
-    public void Result_Match_ExecutesErrFuncWhenResultErr()
+    public void Match_ResultErr_ExecutesErrFunc()
     {
         // Arrange
-        var errorResult = _failureResult;
+        var errorResult = _errResult;
         var okFuncExecuted = false;
         var errFuncExecuted = false;
 
@@ -130,10 +153,10 @@ public class ResultTests<T> where T : new()
     }
 
     [Test]
-    public void Result_Match_ReturnsOkFuncResultWhenResultOk()
+    public void Match_ResultOk_ReturnsOkFuncResult()
     {
         // Arrange
-        var successResult = _successResult;
+        var successResult = _okResult;
 
         bool OkFunc()
         {
@@ -155,10 +178,10 @@ public class ResultTests<T> where T : new()
     }
 
     [Test]
-    public void Result_Match_ReturnsErrFuncResultWhenResultErr()
+    public void Match_ResultErr_ReturnsErrFuncResult()
     {
         // Arrange
-        var errorResult = _failureResult;
+        var errorResult = _errResult;
 
         bool OkFunc()
         {
@@ -178,12 +201,16 @@ public class ResultTests<T> where T : new()
         // Assert
         Assert.That(result, Is.False);
     }
+    
+    #endregion
+    
+    #region AndThen Method
 
     [Test]
-    public void Result_AndThen_ReturnOkFuncResultWhenResultOk()
+    public void AndThen_ResultOk_ReturnOkFuncResult()
     {
         // Arrange
-        var successResult = _successResult;
+        var successResult = _okResult;
 
         Result<bool> NextResult(T ok)
         {
@@ -208,7 +235,7 @@ public class ResultTests<T> where T : new()
     [TestCase(10)]
     [TestCase(100)]
     [TestCase(1000)]
-    public void Result_AndThen_CanChainCalls(int nCalls)
+    public void AndThen_CanChainCalls(int nCalls)
     {
         // Arrange
         Result<int> successResult = 0;
@@ -240,10 +267,11 @@ public class ResultTests<T> where T : new()
         Assert.That(resultErr.IsErr);
     }
 
-    public void Result_AndThen_ShortCircuitsWhenResultErr()
+    [Test]
+    public void AndThen_ResultErr_ShortCircuitsOnErr()
     {
         // Arrange
-        var errorResult = _failureResult;
+        var errorResult = _errResult;
 
         Result<bool> NextResult(T ok)
         {
@@ -271,9 +299,13 @@ public class ResultTests<T> where T : new()
         Assert.That(resultFromResultFunc, Is.False);
         Assert.That(resultFromUnwrappedType, Is.False);
     }
+    
+    #endregion
 
+    #region Unwrap method
+    
     [Test]
-    public void Result_Unwrap_ReturnsValueWhenResultOk()
+    public void Unwrap_ResultOk_ReturnsValue()
     {
         // Arrange
         var value = _rawValue;
@@ -287,18 +319,22 @@ public class ResultTests<T> where T : new()
     }
 
     [Test]
-    public void Result_Unwrap_ThrowsExceptionWhenResultErr()
+    public void Unwrap_ResultErr_ThrowsException()
     {
         // Arrange
-        var errorResult = _failureResult;
+        var errorResult = _errResult;
 
         // Assert
         Assert.That(() => errorResult.Unwrap(),
             Throws.Exception.TypeOf<InvalidOperationException>());
     }
+    
+    #endregion
 
+    #region Expect method
+    
     [Test]
-    public void Result_Expect_ReturnsValueWhenResultOk()
+    public void Expect_ResultOk_ReturnsValue()
     {
         // Arrange
         var value = _rawValue;
@@ -312,14 +348,16 @@ public class ResultTests<T> where T : new()
     }
 
     [Test]
-    public void Result_Expect_ThrowsExceptionWhenResultErr()
+    public void Expect_ResultErr_ThrowsException()
     {
         // Arrange
-        var errorResult = _failureResult;
+        var errorResult = _errResult;
 
         // Assert
         Assert.That(() => errorResult.Expect("Expected a value"),
             Throws.TypeOf<InvalidOperationException>()
                 .With.Message.Contain("Expected a value"));
     }
+    
+    #endregion
 }

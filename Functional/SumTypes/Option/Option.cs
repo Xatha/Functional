@@ -19,12 +19,6 @@ public readonly struct Option<T> : IEquatable<Option<T>>
     private readonly bool _isSome;
     private readonly T? _value;
 
-    public void Deconstruct(out bool isSome, out T value)
-    {
-        isSome = _isSome;
-        value =  _value!;
-    }
-
     /// <summary>
     /// Creates a new Option with no value. Not recommended to use directly, use <see cref="Option{T}.None()"/> instead.
     /// </summary>
@@ -33,19 +27,7 @@ public readonly struct Option<T> : IEquatable<Option<T>>
         _value = default;
         _isSome = false;
     }
-    
-    /// <summary>
-    /// Combines two <see cref="Option{T}"/>s into a single <see cref="Option{T}"/> with a tuple of the values
-    /// that is only Some if both <see cref="Option{T}"/>s are Some.
-    /// </summary>
-    /// <param name="second">The <see cref="Option{T}"/> to combine with.</param>
-    /// <typeparam name="TSecond">The type of the second.</typeparam>
-    /// <returns>An <see cref="Option{T}"/> of type (T, TSecond) that is Some if and only if both this and second are Some.</returns>
-    public Option<(T, TSecond)> Concat<TSecond>(Option<TSecond> second)
-    {
-        return Transform(second, (f, s) => (f, s));
-    }
-    
+
     /// <summary>
     /// Creates a new <see cref="Option{T}"/> with a value. Not recommended to use directly, use <see cref="Option.Some{T}(T)"/> instead.
     /// </summary>
@@ -97,7 +79,7 @@ public readonly struct Option<T> : IEquatable<Option<T>>
     
     public Option<T> NoneMap(Func<T> func)
     {
-        return _isSome ? this: new Option<T>(func());
+        return _isSome ? this : new Option<T>(func());
     }
     
     public Option<T> NoneMap(Func<Option<T>> func)
@@ -122,21 +104,7 @@ public readonly struct Option<T> : IEquatable<Option<T>>
 
         return this;
     }
-    
-    public Option<T> Match(Action<T> some, Func<T> none)
-    {
-        if (_isSome)
-        {
-            some(_value!);
-        }
-        else
-        {
-            none();
-        }
 
-        return this;
-    }
-    
     #endregion
     
     #region Collapse
@@ -158,7 +126,7 @@ public readonly struct Option<T> : IEquatable<Option<T>>
 
     public Option<TResult> Cast<TResult>()
     {
-        return _value is TResult casted ? Option.Some(casted) : Option<TResult>.None();
+        return _isSome && _value is TResult casted ? Option.Some(casted) : Option<TResult>.None();
     }
 
     #endregion
@@ -256,16 +224,6 @@ public readonly struct Option<T> : IEquatable<Option<T>>
 
     #region Equals & GetHashCode Overrides
 
-    /*public bool Equals(Option<T>? other)
-    {
-        if (other is null)
-        {
-            return false;
-        }
-
-        return _value?.Equals(other._value) ?? false;
-    }*/
-    
     public override bool Equals(object? obj)
     {
         return obj is Option<T> other && Equals(other);
@@ -292,5 +250,23 @@ public readonly struct Option<T> : IEquatable<Option<T>>
     public TResult CollapseBind<TArg, TResult>(Func<TArg, TResult> func, TArg arg)
     {
         return func(arg);
+    }
+    
+    /// <summary>
+    /// Combines two <see cref="Option{T}"/>s into a single <see cref="Option{T}"/> with a tuple of the values
+    /// that is only Some if both <see cref="Option{T}"/>s are Some.
+    /// </summary>
+    /// <param name="second">The <see cref="Option{T}"/> to combine with.</param>
+    /// <typeparam name="TSecond">The type of the second.</typeparam>
+    /// <returns>An <see cref="Option{T}"/> of type (T, TSecond) that is Some if and only if both this and second are Some.</returns>
+    public Option<(T, TSecond)> Concat<TSecond>(Option<TSecond> second)
+    {
+        return Transform(second, (f, s) => (f, s));
+    }
+    
+    public void Deconstruct(out bool isSome, out T value)
+    {
+        isSome = _isSome;
+        value =  _value!;
     }
 } 

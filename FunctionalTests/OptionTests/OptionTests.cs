@@ -1,134 +1,539 @@
 using System.Diagnostics.CodeAnalysis;
+using Functional;
 using Functional.SumTypes;
-using static Functional.SumTypes.OptionVariants;
+using FunctionalTests.ResultTests;
 
 namespace FunctionalTests.OptionTests;
 
-[TestFixture]
-[SuppressMessage("ReSharper", "JoinDeclarationAndInitializer")]
-public class OptionTests
+/* Test names follow the convention of:
+ * MethodName_StateUnderTest_ExpectedBehavior
+ * -------------------------------------------
+ * Tests are grouped into regions based on the method/properties they are testing.
+ * Test classes that test generic types must be generic themselves where T is restricted to new(). 
+ *
+ * Generic test classes must be run with the following attribute:
+ * [TestFixture(typeof(Unit))]
+ * [TestFixture(typeof(TestReferenceType))]
+ * [TestFixture(typeof(TestValueType))]
+ * To ensure that the tests are run for all types.
+ */
+
+[TestFixture(typeof(Unit))]
+[TestFixture(typeof(TestReferenceType))]
+[TestFixture(typeof(TestValueType))]
+public class OptionTests<T> where T : new()
 {
-    
-    // todo: add tests for OptionTaskWrapper
-    /*
+    [SetUp]
+    public void Setup()
+    {
+        _rawValue = new T();
+        _someOption = Option.Some(_rawValue);
+        _noneOption = Option.None<T>();
+    }
+
+    private T _rawValue = default!;
+    private Option<T> _someOption;
+    private Option<T> _noneOption;
+
+    #region Consume method
+
     [Test]
-    public async Task MapAsyncTest()
+    public void Consume_Some_CallsAction()
     {
         // Arrange
-        Option<int> number = Option.Some(5);
-        Task<int> AddAsync(int x, int y) => Task.FromResult(x + y);
-        Task<Option<float>> AddFloatAsync(float x, float y) => Task.FromResult(Option.Some<float>(x + y));
-        double Multiply(float x, double y) => x * y;
+        Option<T> option = _someOption;
+        bool called = false;
 
-        OptionTaskWrapper<int> DivideAsync(int x, int y)
+        // Act
+        option.Consume(_ => called = true);
+
+        // Assert
+        Assert.That(called, Is.True);
+    }
+    
+    [Test]
+    public void Consume_None_DoesNotCallAction()
+    {
+        // Arrange
+        Option<T> option = _noneOption;
+        bool called = false;
+
+        // Act
+        option.Consume(_ => called = true);
+
+        // Assert
+        Assert.That(called, Is.False);
+    }
+    
+
+    #endregion
+    
+    #region Map method
+    
+    [Test]
+    public void Map_Some_IsComputed()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        bool called1 = false, called2 = false;
+        int result1, result2;
+        
+        // Act
+        result1 = option.Map(_ =>
         {
-            return OptionTaskWrapper.Some(x);
-        }
-
-        // Act
-        var optionTask1 = number
-            .Map(async x => await AddAsync(x, 1))
-            .Map(async x => await AddFloatAsync(await x, 4))
-            .Map(async x => await AddAsync((int)await x, 1));
-        var optionTask2 = optionTask1
-            .Map(async x => Multiply(await x, 2.0));
+            called1 = true;
+            return 10;
+        }).Collapse(-1);
         
-        var resultOption1 = await optionTask1.Resolve();
-        var resultOption2 = await optionTask2.Resolve();
-        
-        double result = resultOption1 switch { (Some, var v) => v, _ => -1 };
-        double result2 = resultOption2 switch { (Some, var v) => v, _ => -1 };
+        result2 = option.Map(_ =>
+        {
+            called2 = true;
+            return Option.Some(10);
+        }).Collapse(-1);
         
         // Assert
-        Assert.That(result, Is.EqualTo(9.6).Within(0.0001));
-        Assert.That(result2, Is.EqualTo(19.2).Within(0.0001));
-    }
-    */
-    
-    [Test]
-    public void Map_WhenValueIsNotNull_ReturnsCorrectValue()
-    {
-        // Arrange
-        Option<string> option;
-        int result;
-
-        // Act
-        option = Option.Some("Hello World!");
-        result = option.Map(x => x.Length).Collapse(-1);
+        Assert.That(result1, Is.EqualTo(10));
+        Assert.That(result2, Is.EqualTo(10));
         
-        // Assert
-        Assert.That(result, Is.EqualTo("Hello World!".Length));
+        Assert.That(called1, Is.True);
+        Assert.That(called2, Is.True);
     }
     
     [Test]
-    public void Map_WhenValueIsNull_ReturnsDefaultValue()
+    public void Map_None_ReturnsOrElseValue()
     {
         // Arrange
-        Option<string> option;
-        int result;
+        Option<T> option = _noneOption;
+        int result1, result2;
 
         // Act
-        option = Option.None<string>();
-        result = option.Map(x => x.Length).Collapse(-1);
+        result1 = option.Map(_ => 10).Collapse(-1);
+        result2 = option.Map(_ => Option.Some(10)).Collapse(-1);
         
+        // Assert
+        Assert.That(result1, Is.EqualTo(-1));
+        Assert.That(result2, Is.EqualTo(-1));
+    }
+
+    #endregion
+
+    #region MapBind
+
+    [Test]
+    public void MapBind_Some_IsComputed()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        int closure = 42;
+        bool called = false;
+        int result;
+        
+        // Action
+        result = option.MapBind((_, y) =>
+        {
+            called = true;
+            return 10 + y;
+        }, closure).Collapse(-1);
+        
+        // Assert
+        Assert.That(result, Is.EqualTo(52));
+        Assert.That(called, Is.True);
+    }
+    
+    [Test]
+    public void MapBind_None_IsNotComputed()
+    {
+        // Arrange
+        Option<T> option = _noneOption;
+        int closure = 42;
+        bool called = false;
+        int result;
+        
+        // Action
+        result = option.MapBind((_, y) =>
+        {
+            called = true;
+            return 10 + y;
+        }, closure).Collapse(-1);
         
         // Assert
         Assert.That(result, Is.EqualTo(-1));
+        Assert.That(called, Is.False);
+    }
+
+    #endregion
+
+    #region NoneMap method
+    
+    // TODO: Look at if API has changed for this method.
+    // Otherwise, look into how to test this with generics.
+    
+    #endregion
+
+    #region Match method
+    
+    [Test]
+    public void Match_Some_CallsSomeAction()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        bool someCalled = false;
+        bool noneCalled = false;
+
+        // Act
+        option.Match(_ => someCalled = true, () => noneCalled = false);
+
+        // Assert
+        Assert.That(someCalled, Is.True);
+        Assert.That(noneCalled, Is.False);
     }
     
     [Test]
-    public void Map_WithOption_WhenValueIsNotNull_ReturnsCorrectValue()
+    public void Match_None_CallsNoneAction()
     {
         // Arrange
-        Option<string> option;
-        Option<int> length;
-        int result;
-        
-        Option<int> Add(int x, Option<int> y) => y.Map(z => x + z);
-        
+        Option<T> option = _noneOption;
+        bool someCalled = false;
+        bool noneCalled = false;
+
         // Act
-        option = Option.Some("Hello World!");
-        length = Option.Some(5);
-        result = option.Map(x => Add(x.Length, length)).Collapse(-1);
-        
+        option.Match(_ => someCalled = true, () => noneCalled = true);
+
         // Assert
-        Assert.That(result, Is.EqualTo("Hello World!".Length + 5));
+        Assert.That(someCalled, Is.False);
+        Assert.That(noneCalled, Is.True);
     }
+
+    #endregion
     
+    #region Collapse method
+
     [Test]
-    public void Map_WithOption_WhenValueIsNull_ReturnsDefaultValue()
+    public void Collapse_Some_FuncIsNotCalled()
     {
         // Arrange
-        Option<string> option;
-        Option<int> length;
+        Option<T> option = _someOption;
         int result;
-        
-        Option<int> Add(int x, Option<int> y) => y.Map(z => x + z);
+        bool called = false;
         
         // Act
-        option = Option.None<string>();
-        length = Option.Some(5);
-        result = option.Map(x => Add(x.Length, length)).Collapse(-1);
+        result = option.Map(_ => 10).Collapse(() => 
+        {
+            called = true;
+            return -1;
+        });
         
         // Assert
-        Assert.That(result, Is.EqualTo(-1));
+        Assert.That(result, Is.EqualTo(10));
+        Assert.That(called, Is.False);
     }
 
     [Test]
-    public void BindMap_WithOption_WhenValueIsNull_ReturnsCorrectValue()
+    public void Collapse_None_ReturnsFuncValue()
     {
         // Arrange
-        Option<string> option;
-        int length;
+        Option<T> option = _noneOption;
+        int result;
+        bool called = false;
+        
+        // Act
+        result = option.Map(_ => 10).Collapse(() => 
+        {
+            called = true;
+            return -1;
+        });
+        
+        // Assert
+        Assert.That(result, Is.EqualTo(-1));
+        Assert.That(called, Is.True);
+    }
+    
+    #endregion
+
+    #region Cast method
+
+    [Test]
+    [SuppressMessage("ReSharper", "ConvertTypeCheckToNullCheck")]
+    public void Cast_SomeAndCastIsValid_ReturnsSomeNewType()
+    {
+        // Arrange
+        Option<object> option = Option.Some<object>(new T());
+        Option<T> result;
+        
+        // Act
+        result = option.Cast<T>();
+        
+        // Assert
+        Assert.That(result.Map(_ => 10).Collapse(-1), Is.EqualTo(10));
+        Assert.That(_rawValue is T, Is.True);
+    }
+    
+    [Test]
+    public void Cast_SomeAndCastIsNotValid_ReturnsNone()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        Option<int> result;
+        
+        // Act
+        result = option.Cast<int>();
+        
+        // Assert
+        Assert.That(result.Map(_ => 10).Collapse(-1), Is.EqualTo(-1));
+        Assert.That(_rawValue is int, Is.False);
+    }
+    
+        
+    [Test]
+    public void Cast_NoneAndCastIsValid_ReturnsNone()
+    {
+        // Arrange
+        Option<T> option = _noneOption;
+        Option<object> result;
+        
+        // Act
+        result = option.Cast<object>();
+
+        // Assert
+        Assert.That(result.Map(_ => 10).Collapse(-1), Is.EqualTo(-1));
+        Assert.That(_rawValue is object, Is.True);
+    }
+
+    [Test]
+    public void Cast_NoneAndCastIsNotValid_ReturnsNone()
+    {
+        // Arrange
+        Option<T> option = _noneOption;
+        Option<int> result;
+        
+        // Act
+        result = option.Cast<int>();
+        
+        // Assert
+        Assert.That(result.Map(_ => 10).Collapse(-1), Is.EqualTo(-1));
+        Assert.That(_rawValue is int, Is.False);
+    }
+    
+    #endregion
+    
+    #region Transform method
+    
+    [Test]
+    public void Transform_SomeAndSome_ReturnsSomeNewType()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        Option<int> other = Option.Some(10);
+        bool called = false;
         int result;
         
         // Act
-        option = Option.Some("Hello World!");
-        length = 5;
-        
-        result = option.MapBind((x, y) => x.Length + y, length).Collapse(-1);
+        result = option.Transform(other, (_, o) =>
+            {
+                called = true;
+                return o + 32;
+            })
+            .Collapse(-1);
         
         // Assert
-        Assert.That(result, Is.EqualTo("Hello World!".Length + 5));
+        Assert.That(result, Is.EqualTo(42));
+        Assert.That(called, Is.True);
     }
+    
+    [Test]
+    public void Transform_SomeAndNone_ReturnsNone()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        Option<int> other = Option.None<int>();
+        bool called = false;
+        int result;
+        
+        // Act
+        result = option.Transform(other, (_, o) =>
+            {
+                called = true;
+                return o + 32;
+            })
+            .Collapse(-1);
+        
+        // Assert
+        Assert.That(result, Is.EqualTo(-1));
+        Assert.That(called, Is.False);
+    }
+    
+    [Test]
+    public void Transform_NoneAndSome_ReturnsNone()
+    {
+        // Arrange
+        Option<T> option = _noneOption;
+        Option<int> other = Option.Some(10);
+        bool called = false;
+        int result;
+        
+        // Act
+        result = option.Transform(other, (_, o) =>
+            {
+                called = true;
+                return o + 32;
+            })
+            .Collapse(-1);
+        
+        // Assert
+        Assert.That(result, Is.EqualTo(-1));
+        Assert.That(called, Is.False);
+    }
+    
+    [Test]
+    public void Transform_NoneAndNone_ReturnsNone()
+    {
+        // Arrange
+        Option<T> option = _noneOption;
+        Option<int> other = Option.None<int>();
+        bool called = false;
+        int result;
+        
+        // Act
+        result = option.Transform(other, (_, o) =>
+            {
+                called = true;
+                return o + 32;
+            })
+            .Collapse(-1);
+        
+        // Assert
+        Assert.That(result, Is.EqualTo(-1));
+        Assert.That(called, Is.False);
+    }
+    
+    #endregion
+    
+    #region Concat method
+
+    [Test]
+    public void Concat_SomeAndSome_ReturnsCombinedSome()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        Option<int> other = Option.Some(5);
+        
+        Option<(T, int)> result;
+
+        // Act
+        result = option.Concat(other);
+        
+        // Assert
+        Assert.That(result.Map(t => t.Item2).Collapse(-1), Is.EqualTo(5));
+    }
+    
+    [Test]
+    public void Concat_SomeAndNone_ReturnsNone()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        Option<int> other = Option.None<int>();
+        
+        Option<(T, int)> result;
+
+        // Act
+        result = option.Concat(other);
+        
+        // Assert
+        Assert.That(result.Map(t => t.Item2).Collapse(-1), Is.EqualTo(-1));
+    }
+    
+    [Test]
+    public void Concat_NoneAndSome_ReturnsNone()
+    {
+        // Arrange
+        Option<T> option = _noneOption;
+        Option<int> other = Option.Some(5);
+        
+        Option<(T, int)> result;
+
+        // Act
+        result = option.Concat(other);
+        
+        // Assert
+        Assert.That(result.Map(t => t.Item2).Collapse(-1), Is.EqualTo(-1));
+    }
+    
+    #endregion
+
+    #region Operators
+
+    [Test]
+    public void OperatorEquals_SameReference_ReturnsTrue()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        Option<T> other = _someOption;
+        
+        // Act
+        bool result = option == other;
+        bool result2 = option.Equals(other);
+        bool result3 = option != other;
+        
+        // Assert
+        Assert.That(result, Is.True);
+        Assert.That(result2, Is.True);
+        Assert.That(result3, Is.False);
+    }
+    
+    [Test]
+    public void OperatorEquals_SameValue_ReturnsTrue()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        Option<T> other = Option.Some(new T());
+        
+        // Act
+        bool result = option == other;
+        bool result2 = option.Equals(other);
+        bool result3 = option != other;
+        
+        // Assert
+        Assert.That(result, Is.True);
+        Assert.That(result2, Is.True);
+        Assert.That(result3, Is.False);
+    }
+    
+    [Test]
+    public void OperatorEquals_DifferentReference_ReturnsFalse()
+    {
+        // Arrange
+        Option<TestReferenceType> option = Option.Some(new TestReferenceType { Value = 10 });
+        Option<TestReferenceType> other = Option.Some(new TestReferenceType { Value = 20 });
+        
+        // Act
+        bool result = option == other;
+        bool result2 = option.Equals(other);
+        bool result3 = option != other;
+        
+        // Assert
+        Assert.That(result, Is.False);
+        Assert.That(result2, Is.False);
+        Assert.That(result3, Is.True);
+    }
+    
+    [Test]
+    public void OperatorEquals_DifferentValue_ReturnsFalse()
+    {
+        // Arrange
+        Option<TestValueType> option = Option.Some(new TestValueType { Value = 10 });
+        Option<TestValueType> other = Option.Some(new TestValueType { Value = 20 });
+        
+        // Act
+        bool result = option == other;
+        bool result2 = option.Equals(other);
+        bool result3 = option != other;
+        
+        // Assert
+        Assert.That(result, Is.False);
+        Assert.That(result2, Is.False);
+        Assert.That(result3, Is.True);
+    }
+    
+
+    #endregion
 }
