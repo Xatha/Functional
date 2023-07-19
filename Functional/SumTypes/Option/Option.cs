@@ -77,12 +77,12 @@ public readonly struct Option<T> : IEquatable<Option<T>>
         return _isSome ? func(_value!) : new Option<TResult>();
     }
     
-    public Option<T> NoneMap(Func<T> func)
+    public Option<T> MapNone(Func<T> func)
     {
         return _isSome ? this : new Option<T>(func());
     }
     
-    public Option<T> NoneMap(Func<Option<T>> func)
+    public Option<T> MapNone(Func<Option<T>> func)
     {
         return _isSome ? this : func();
     }

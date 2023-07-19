@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Functional;
 using Functional.SumTypes;
-using FunctionalTests.ResultTests;
 
 namespace FunctionalTests.OptionTests;
 
@@ -115,6 +114,66 @@ public class OptionTests<T> where T : new()
         Assert.That(result2, Is.EqualTo(-1));
     }
 
+    #endregion
+
+    #region NoneMap
+
+    [Test]
+    public void MapNone_Some_ReturnsOriginal()
+    {
+        // Arrange
+        Option<T> option = _someOption;
+        bool called1 = false;
+        bool called2 = false;
+        T result1;
+        T result2;
+        
+        // Act
+        result1 = option.MapNone(() =>
+        {
+            called1 = true;
+            return new T();
+        }).Collapse(null!);
+        
+        result2 = option.MapNone(() =>
+        {
+            called2 = true;
+            return Option.Some(new T());
+        }).Collapse(null!);
+        
+        // Assert
+        Assert.That(result1, Is.EqualTo(_rawValue));
+        Assert.That(result2, Is.EqualTo(_rawValue));
+        Assert.That(called1, Is.False);
+        Assert.That(called2, Is.False);
+    }
+    
+    [Test]
+    public void MapNone_None_ReturnsNewValue()
+    {
+        // Arrange
+        Option<T> option = _noneOption;
+        bool called1 = false;
+        bool called2 = false;
+
+        // Act
+        option.MapNone(() =>
+        {
+            called1 = true;
+            return new T();
+        }).Collapse(null!);
+        
+        option.MapNone(() =>
+        {
+            called2 = true;
+            return Option.Some(new T());
+        }).Collapse(null!);
+        
+        // Assert
+        Assert.That(called1, Is.True);
+        Assert.That(called2, Is.True);
+    }
+    
     #endregion
 
     #region MapBind
