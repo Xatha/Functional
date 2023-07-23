@@ -1,5 +1,8 @@
 namespace Functional.SumTypes;
 
+// TODO: 
+// - Make it possible to give a cancellation token, which will cancel the whole chain
+
 public static class OptionTaskWrapper
 {
     public static OptionTaskWrapper<T> Some<T>(T value)
@@ -29,6 +32,32 @@ public readonly struct OptionTaskWrapper<T>
 
     internal OptionTaskWrapper(T value) : this(Task.FromResult(Option.Some(value)))
     {
+    }
+
+    public OptionTaskWrapper<TResult> Map<TResult>(Func<T, Task<TResult>> func)
+    {
+        if (_task is null) return new OptionTaskWrapper<TResult>();
+
+        var nextTask = _task.ContinueWith(async t => await t switch
+        {
+            (true, var value) => SumTypes.Option.Some(await func(value)),
+            _ => SumTypes.Option.None<TResult>()
+        }).Unwrap();
+
+        return new OptionTaskWrapper<TResult>(nextTask);
+    }
+    
+    public OptionTaskWrapper<TResult> Map<TResult>(Func<T, Task<TResult>> func, CancellationToken cancellationToken)
+    {
+        if (_task is null) return new OptionTaskWrapper<TResult>();
+
+        var nextTask = _task.ContinueWith(async t => await t switch
+        {
+            (true, var value) => SumTypes.Option.Some(await func(value)),
+            _ => SumTypes.Option.None<TResult>()
+        }, cancellationToken).Unwrap();
+
+        return new OptionTaskWrapper<TResult>(nextTask);
     }
 
     public OptionTaskWrapper<TResult> Map<TResult>(Func<Task<T>, Task<TResult>> func)

@@ -111,24 +111,93 @@ public readonly struct Result<TOk>
     {
         _either.Deconstruct(out isOk, out ok, out error);
     }
-
     
 }
 
 public readonly struct Result<TOk, TError>
 {
-    private readonly Either<TOk, TError> _either;
+    private const string ErrorMessageHeading = "Cannot `unwrap()` an `Error` value.\n------------ERROR WALKTHROUGH-------------\n";
+    private const string ErrorMessageFooter = "\n------------------------------------------";
 
+    private readonly Either<TOk, TError> _either;
+    
+    public bool IsOk => _either.IsLeft;
+    public bool IsErr => _either.IsRight;
+    
     internal Result(TOk ok)
     {
-        throw new NotImplementedException();
+        _either = Either.Left<TOk, TError>(ok);
     }
-
+    
     internal Result(TError error)
     {
-        throw new NotImplementedException();
+        _either = Either.Right<TOk, TError>(error);
     }
 
-    public static implicit operator Result<TOk, TError>(TOk ok) => new(ok);
+    public static implicit operator Result<TOk, TError>(TOk? ok) => ok is not null ? new(ok) : new();
     public static implicit operator Result<TOk, TError>(TError error) => new(error);
+    
+    /* TODO: These methods might not be needed.
+    public static Result<TOk> Ok(TOk ok) => new(ok);
+    public static Result<TOk> Err(Error error) => new(error);
+
+    public static Result<TOk> Err(string error) => new(Error.From(error));
+    public static Result<TOk> Err(Exception error) => new(Error.From(error));
+    */
+
+    #region Match
+
+    public void Match(Action<TOk> ok, Action<TError> error) => _either.Match(ok, error);
+
+    public TResult Match<TResult>(Func<TOk, TResult> ok, Func<TError, TResult> error) => _either.Match(ok, error);
+
+    #endregion
+
+    #region AndThen
+
+    public Result<TNextOk, TError> AndThen<TNextOk>(Func<TOk, Result<TNextOk, TError>> func)
+    {
+        return _either switch
+        {
+            (EitherVariants.Left, var ok, _) => func(ok),
+            (EitherVariants.Right, _, var error) => Result.Err<TNextOk, TError>(error)
+        };
+    }
+    public Result<TNextOk, TError> AndThen<TNextOk>(Func<TOk, TNextOk> func)
+    {
+        return _either switch
+        {
+            (EitherVariants.Left, var ok, _) => func(ok),
+            (EitherVariants.Right, _, var error) => Result.Err<TNextOk, TError>(error)
+        };
+    }
+
+    #endregion
+
+
+    #region Unwrap
+
+    public TOk Expect(string message)
+    {
+        return _either.Match(
+            ok => ok,
+            error => throw new InvalidOperationException(
+                $"{message}\n------------ERROR WALKTHROUGH-------------\n{error}{ErrorMessageFooter}"));
+    }
+    
+    public TOk Unwrap()
+    {
+        return _either.Match(
+            ok => ok,
+            error => throw new InvalidOperationException(
+                $"{ErrorMessageHeading}{error}{ErrorMessageFooter}"));
+    }
+    
+    #endregion
+    
+    public void Deconstruct(out bool isOk, out TOk ok, out TError error)
+    {
+        _either.Deconstruct(out isOk, out ok, out error);
+    }
+    
 }

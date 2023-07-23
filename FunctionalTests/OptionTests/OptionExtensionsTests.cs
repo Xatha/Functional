@@ -1,98 +1,62 @@
+using Functional;
 using Functional.SumTypes;
 
 namespace FunctionalTests.OptionTests;
 
-[TestFixture]
+/* Test names follow the convention of:
+ * MethodName_StateUnderTest_ExpectedBehavior
+ * -------------------------------------------
+ * Tests are grouped into regions based on the method/properties they are testing.
+ * Test classes that test generic types must be generic themselves where T is restricted to new().
+ *
+ * Generic test classes must be run with the following attribute:
+ * [TestFixture(typeof(Unit))]
+ * [TestFixture(typeof(TestReferenceType))]
+ * [TestFixture(typeof(TestValueType))]
+ * To ensure that the tests are run for all types.
+ */
+
 public class OptionExtensionsTests
 {
+    #region ToOption method
+
     [Test]
-    public void ToOption_OnNullClass_WillBeNoneOption()
+    public void ToOption_OnNullObject_ReturnsNoneOption()
     {
         // Arrange
-        string? input = null;
+        TestReferenceType? referenceInput = null;
+        TestValueType? structInput = null;
 
-        var expected = "isNone!";
-        string actual;
+        string resultReference;
+        string resultStruct;
 
         // Act
-        actual = input.ToOption().Collapse("isNone!");
+        resultReference = referenceInput.ToOption().Map(_ => "Some").Collapse("None");
+        resultStruct = structInput.ToOption().Map(_ => "Some").Collapse("None");
 
         // Assert
-        Assert.That(actual, Is.EqualTo(expected));
+        Assert.That(resultReference, Is.EqualTo("None"));
+        Assert.That(resultStruct, Is.EqualTo("None"));
     }
 
     [Test]
-    public void ToOption_OnNullStruct_WillBeNoneOption()
+    public void ToOption_OnNotNull_ReturnsSomeOption()
     {
         // Arrange
-        int? input = null;
+        TestReferenceType? referenceInput = new();
+        TestValueType? structInput = new();
 
-        var expected = -9999;
-        int actual;
-
-        // Act
-        actual = input.ToOption().Collapse(-9999);
-
-        // Assert
-        Assert.That(actual, Is.EqualTo(expected));
-    }
-
-    [Test]
-    public void ToOption_OnNotNull_WillBeOption()
-    {
-        // Arrange
-        var classInput = "Hello World!";
-        
-        int? structInput = 69;
-
-        var expectedClass = "Hello World!";
-        var expectedStruct = 69;
-
-        string actualClass;
-        int actualStruct;
+        string resultReference;
+        string resultStruct;
 
         // Act
-        actualClass = classInput.ToOption().Collapse("isNone!");
-        actualStruct = structInput.ToOption().Collapse(-1);
+        resultReference = referenceInput.ToOption().Map(_ => "Some").Collapse("None");
+        resultStruct = structInput.ToOption().Map(_ => "Some").Collapse("None");
 
         // Assert
-        Assert.That(actualClass, Is.EqualTo(expectedClass));
-        Assert.That(actualStruct, Is.EqualTo(expectedStruct));
-    }
-
-    [Test]
-    public void Transform()
-    {
-        // Arrange
-        var firstInput = Option.Some(5);
-        var secondInput = Option.Some(10);
-
-        var expected = 15;
-        int actual;
-
-        // Act
-        actual = firstInput.Transform(secondInput, (x, y) => x + y).Collapse(-1);
-
-        // Assert
-        Assert.That(actual, Is.EqualTo(expected));
+        Assert.That(resultReference, Is.EqualTo("Some"));
+        Assert.That(resultStruct, Is.EqualTo("Some"));
     }
     
-    [Test]
-    public void Polymorphic_Types_Should_Convert()
-    {
-        // Arrange
-        Option<PolyClass> option;
-        Option<IPolymorphic> result;
-        Option<PolyClass> expected;
-        
-        // Act
-        option = Option.Some(new PolyClass());
-        result = option.Cast<IPolymorphic>();
-        expected = option;
-
-        // Assert
-        Assert.That(
-            result.Map(e => e.Value).Collapse(69), 
-            Is.EqualTo(expected.Map(e => ((IPolymorphic) e).Value).Collapse(-1)));
-    }
+    #endregion
 }

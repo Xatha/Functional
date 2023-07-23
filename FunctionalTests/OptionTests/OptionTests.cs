@@ -34,6 +34,40 @@ public class OptionTests<T> where T : new()
     private Option<T> _someOption;
     private Option<T> _noneOption;
 
+    #region Construction
+
+    [Test]
+    public void Some_TValue_ReturnsSomeOption()
+    {
+        // Arrange
+        Option<T> option = _someOption; 
+        
+        // Act
+        int result = option.Map(_ => 10).Collapse(-1);
+
+        // Assert
+        Assert.That(result, Is.EqualTo(10));
+    }
+    
+    [Test]
+    public void Some_Null_ReturnsNoneOption()
+    {
+        // Arrange
+        Option<TestReferenceType> referenceOption = Option.Some<TestReferenceType>(null);
+        Option<TestValueType> valueOption = Option.Some<TestValueType>(null);
+
+        // Act
+        int referenceResult = referenceOption.Map(_ => 10).Collapse(-1);
+        int valueResult = valueOption.Map(_ => 10).Collapse(-1);
+
+        // Assert
+        Assert.That(referenceResult, Is.EqualTo(-1));
+        Assert.That(valueResult, Is.EqualTo(-1));
+    }
+    
+
+    #endregion
+    
     #region Consume method
 
     [Test]

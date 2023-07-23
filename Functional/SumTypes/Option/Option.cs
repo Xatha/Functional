@@ -3,14 +3,19 @@ namespace Functional.SumTypes;
 // Used for cleaner syntax when using creating a new Option with a value.
 public static class Option
 {
-    public static Option<T> Some<T>(T value)
+    public static Option<T> Some<T>(T? value)
     {
-        return new(value);
+        return value is not null ? new Option<T>(value) : new Option<T>();
+    }
+    
+    public static Option<T> Some<T>(T? value) where T : struct
+    {
+        return value is not null ? new Option<T>(value.Value) : new Option<T>();
     }
     
     public static Option<T> None<T>()
     {
-        return new();
+        return new Option<T>();
     }
 }
 

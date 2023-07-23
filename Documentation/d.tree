@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+
+<instance-profile id="d"
+                 name="docs"
+                 start-page="GetingStarted.md">
+
+    <toc-element topic="starter-topic.md"/>
+    <toc-element topic="Starter.md"/>
+    <toc-element topic="GetingStarted.md"/>
+    <toc-element topic="Documentation.md">
+        <toc-element topic="Result.md"/>
+        <toc-element topic="ImmutableArrayView.md"/>
+        <toc-element topic="Either.md"/>
+        <toc-element topic="Reference.topic"/>
+        <toc-element topic="Option.md"/>
+    </toc-element>
+</instance-profile>
